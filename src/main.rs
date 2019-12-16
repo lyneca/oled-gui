@@ -1,7 +1,7 @@
 use rppal::i2c::I2c;
 use ssd1306::{Builder, mode::GraphicsMode};
 use piscreen::{View, ButtonSet};
-use piscreen::views::{MenuView, TextView, FileView};
+use piscreen::views::{MenuView, TextView, FileView, TextInputView};
 use piscreen::{menu_view, text_view, file_view};
 
 fn main() {
@@ -15,6 +15,7 @@ fn main() {
 
     let mut root = menu_view![
         ("Files", file_view!("/home/pi")),
+        ("Input", TextInputView::new()),
         ("Submenu", menu_view![
             ("Sub-entry 1", text_view!("Foo bar")),
             ("Sub-entry 2", text_view!("Lip sum"))
