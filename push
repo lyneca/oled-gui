@@ -1,0 +1,18 @@
+#!/bin/bash
+
+ADDR="pi@192.168.0.20"
+#ADDR="pi@masterpi.local:~"
+#ADDR="pi@192.168.43.211:~"
+
+function colorecho() {
+    echo -e "\e[1m\e[34m$*\e[0m"
+}
+
+colorecho ":: Building..."
+PKG_CONFIG_ALLOW_CROSS=1 cargo build --release --target=arm-unknown-linux-gnueabihf
+
+colorecho ":: Sending to $ADDR..."
+rsync target/arm-unknown-linux-gnueabihf/release/oled-gui $ADDR:~
+
+colorecho ":: Restarting service on $ADDR..."
+ssh $ADDR sudo systemctl restart oled-gui.service
