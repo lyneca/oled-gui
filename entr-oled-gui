@@ -1,0 +1,3 @@
+#!/bin/bash
+source /home/pi/.env
+ls /home/pi/oled-gui | entr /home/pi/oled-gui

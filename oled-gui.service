@@ -1,0 +1,14 @@
+[Unit]
+Description=OLED GUI
+After=network.target
+
+[Service]
+ExecStart=/bin/entr-oled-gui
+WorkingDirectory=/home/pi
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
