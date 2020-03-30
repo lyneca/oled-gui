@@ -59,11 +59,12 @@ fn main() {
         ("Input", TextInputView::new()),
         // ("Wifi", WifiView::new()),
         ("Set Slack Status", menu_view![
+            ("Available", slack_status!("Available", ":successful:")),
             ("Eating lunch", slack_status!("Eating lunch", ":apple:")),
             ("Sleeping", slack_status!("Sleeping", ":sleeping:")),
             ("Piano break", slack_status!("Piano break", ":musical_keyboard:")),
             ("Bugfixing", slack_status!("Bugfixing", ":bug:")),
-            ("Dealing with a HOT", slack_status!("Dealing with a HOT", ":hot:")),
+            ("Helping with a HOT", slack_status!("Helping with a HOT", ":hot:")),
             ("Oncall", slack_status!("Oncall", ":telephone_receiver:")),
             ("Walking dog", slack_status!("Walking dog", ":doggoblob:"))
         ]),
