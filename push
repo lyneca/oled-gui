@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ADDR="pi@192.168.0.20"
+ADDR="pi@192.168.0.17"
 #ADDR="pi@masterpi.local:~"
 #ADDR="pi@192.168.43.211:~"
 
@@ -11,6 +11,12 @@ function colorecho() {
 colorecho ":: Building..."
 PKG_CONFIG_ALLOW_CROSS=1 cargo build --release --target=arm-unknown-linux-gnueabihf
 
+if [ ! "$?" -eq "0" ]; then
+    colorecho ":: ❌ Build failed!"
+    exit 1
+else
+    colorecho ":: ✔️ Build  succeeded!"
+fi
 colorecho ":: Sending to $ADDR..."
 rsync target/arm-unknown-linux-gnueabihf/release/oled-gui $ADDR:~
 
