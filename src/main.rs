@@ -1,21 +1,65 @@
 use std::env;
+use std::fs::File;
+use std::io::prelude::*;
+use std::collections::HashMap;
+use std::io;
+use serde::Deserialize;
+use serde_json::{Value, from_str};
 use rppal::i2c::I2c;
 use ssd1306::{Builder, mode::GraphicsMode};
 use piscreen::{View, ButtonSet};
-use piscreen::views::{MenuView, TextView, FileView, TextInputView, FuncView};
+use piscreen::views::{MenuView, MenuEntry, TextView, FileView, TextInputView, FuncView};
 use piscreen::{menu_view, text_view, file_view};
 use reqwest::blocking::Client;
-use std::collections::HashMap;
 
 const URL: &str = "https://slack.com/api/users.profile.set";
 
-fn send_status(icon: &str, text: &str) {
+macro_rules! slack_status {
+    ($x:expr, $y:expr) => {
+        FuncView::new(&|| {
+            send_status($y.to_owned(), $x.to_owned());
+            None
+        })
+    };
+}
+
+#[derive(Deserialize)]
+struct JSONEntry {
+    text: String,
+    emoji: String
+}
+
+fn get_menu() -> Result<MenuView, io::Error> {
+    let mut file = File::open("statuses.json")?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    let entries: Vec<JSONEntry> = from_str(contents.as_str())?;
+    let mut menu = MenuView::new();
+    for entry in entries {
+        menu.add_entry((
+                entry.text.clone(), 
+                Box::new(FuncView::new(
+                        move || {
+                            send_status(entry.emoji.clone(), entry.text.clone());
+                            Some(Box::new(text_view!("Status set!")))
+                        }
+                ))))
+    }
+    Ok(menu)
+}
+
+/*
+ * std::vec::Vec<(std::string::String, std::boxed::Box<dyn piscreen::view::View>)>
+ *               (std::string::String, std::boxed::Box<piscreen::views::func::FuncView<'_>>)
+ */
+
+fn send_status(icon: String, text: String) {
     let client = Client::new();
     let mut payload = HashMap::new();
     let mut profile = HashMap::new();
     profile.insert("status_text", text);
     profile.insert("status_emoji", icon);
-    profile.insert("status_expiration", "0");
+    profile.insert("status_expiration", "0".to_owned());
     payload.insert("profile", profile);
     if let Ok(token) = env::var("SLACK_TOKEN") {
         let res = match client.post(URL)
@@ -37,14 +81,6 @@ fn send_status(icon: &str, text: &str) {
     }
 }
 
-macro_rules! slack_status {
-    ($x:expr, $y:expr) => {
-        FuncView::new(&|| {
-            send_status($y, $x);
-        })
-    };
-}
-
 fn main() {
     let mut i2c = I2c::new().expect("Could not create I2C Device");
     i2c.set_slave_address(0x3c).expect("Could not select device");
@@ -58,16 +94,7 @@ fn main() {
         ("Files", file_view!("/home/pi")),
         ("Input", TextInputView::new()),
         // ("Wifi", WifiView::new()),
-        ("Set Slack Status", menu_view![
-            ("Available", slack_status!("Available", ":successful:")),
-            ("Eating lunch", slack_status!("Eating lunch", ":apple:")),
-            ("Sleeping", slack_status!("Sleeping", ":sleeping:")),
-            ("Piano break", slack_status!("Piano break", ":musical_keyboard:")),
-            ("Bugfixing", slack_status!("Bugfixing", ":bug:")),
-            ("Helping with a HOT", slack_status!("Helping with a HOT", ":hot:")),
-            ("Oncall", slack_status!("Oncall", ":telephone_receiver:")),
-            ("Walking dog", slack_status!("Walking dog", ":doggoblob:"))
-        ]),
+        ("Set Slack Status", get_menu().unwrap()),
         ("Text Tests", menu_view![
             ("Captain Vor's Speech", text_view!(
                 "Look at them, they come to this place when they know they are not pure.
